@@ -58,8 +58,8 @@ export async function createPaste(data: {
 }
 
 // Returns true if the paste is still valid (not expired by time or views)
-export function isPasteValid(paste: Paste): boolean {
-  if (paste.expires_at && new Date(paste.expires_at) < new Date()) return false;
-  if (paste.max_views !== null && paste.view_count > paste.max_views) return false;
+export function isPasteValid(paste: Paste, nowMs: number = Date.now()): boolean {
+  if (paste.expires_at && new Date(paste.expires_at).getTime() < nowMs) return false;
+  if (paste.max_views !== null && paste.view_count >= paste.max_views) return false;
   return true;
 }

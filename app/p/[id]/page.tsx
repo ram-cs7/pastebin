@@ -3,19 +3,15 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 type PasteData = {
-  slug: string;
-  title: string | null;
   content: string;
-  created_at: string;
+  remaining_views: number | null;
   expires_at: string | null;
-  max_views: number | null;
-  view_count: number;
 };
 
 export default function PastePage() {
   const params              = useParams();
   const router              = useRouter();
-  const slug                = params.slug as string;
+  const id                  = params.id as string;
   const [paste, setPaste]   = useState<PasteData | null>(null);
   const [error, setError]   = useState("");
   const [copied, setCopied] = useState(false);
@@ -24,7 +20,7 @@ export default function PastePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res  = await fetch(`/api/paste/${slug}`);
+        const res  = await fetch(`/api/pastes/${id}`);
         const data = await res.json();
         if (!res.ok) { setError(data.error || "Failed to load paste."); return; }
         setPaste(data);
@@ -35,7 +31,7 @@ export default function PastePage() {
       }
     }
     load();
-  }, [slug]);
+  }, [id]);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href);
@@ -58,7 +54,7 @@ export default function PastePage() {
     if (!paste) return null;
     const parts = [];
     if (paste.expires_at) parts.push(`Expires ${formatDate(paste.expires_at)}`);
-    if (paste.max_views)  parts.push(`${paste.view_count}/${paste.max_views} views`);
+    if (paste.remaining_views !== null)  parts.push(`${paste.remaining_views} views remaining`);
     if (!parts.length)    parts.push("Never expires · Unlimited views");
     return parts.join("  ·  ");
   }
@@ -117,12 +113,12 @@ export default function PastePage() {
 
         {/* Title */}
         <h1 className="text-xl font-bold text-white mb-1">
-          {paste?.title || "Untitled paste"}
+          Paste
         </h1>
 
         {/* Meta */}
         <p className="text-gray-500 text-xs mb-4">
-          Created {formatDate(paste!.created_at)}  ·  {expiryBadge()}
+          {expiryBadge()}
         </p>
 
         {/* Content */}

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const router = useRouter();
-  const [title, setTitle]       = useState("");
   const [content, setContent]   = useState("");
   const [expiresIn, setExpires] = useState("never");
   const [maxViews, setMaxViews] = useState("unlimited");
@@ -17,15 +16,33 @@ export default function HomePage() {
     if (!content.trim()) { setError("Content cannot be empty."); return; }
 
     setLoading(true);
+    
+    // Convert to integers
+    let ttl_seconds: number | undefined;
+    const durations: Record<string, number> = {
+      "1h": 3600,
+      "1d": 86400,
+      "7d": 604800,
+      "30d": 2592000,
+    };
+    if (expiresIn !== "never" && durations[expiresIn]) {
+      ttl_seconds = durations[expiresIn];
+    }
+    
+    let parsed_max_views: number | undefined;
+    if (maxViews !== "unlimited") {
+      parsed_max_views = parseInt(maxViews, 10);
+    }
+
     try {
-      const res = await fetch("/api/paste", {
+      const res = await fetch("/api/pastes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, expiresIn, maxViews }),
+        body: JSON.stringify({ content, ttl_seconds, max_views: parsed_max_views }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); return; }
-      router.push(`/${data.slug}`);
+      router.push(`/p/${data.id}`);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -43,16 +60,6 @@ export default function HomePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Title */}
-          <input
-            type="text"
-            placeholder="Title (optional)"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            maxLength={120}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
           {/* Content */}
           <textarea
             placeholder="Paste your content here..."
