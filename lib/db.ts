@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 // Neon provides a serverless Postgres client that works in edge/serverless environments.
 // DATABASE_URL is set in your .env.local (locally) and Vercel environment variables (production).
-const sql = neon(process.env.DATABASE_URL!);
+const sql = neon(process.env.DATABASE_URL || "postgres://dummy:dummy@localhost:5432/dummy");
 
 export default sql;
 
